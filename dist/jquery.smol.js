@@ -90,6 +90,7 @@ var isWindow = function isWindow( obj ) {
 	var preservedScriptAttributes = {
 		type: true,
 		src: true,
+		nonce: true,
 		noModule: true
 	};
 
@@ -104,6 +105,15 @@ var isWindow = function isWindow( obj ) {
 			for ( i in preservedScriptAttributes ) {
 				if ( node[ i ] ) {
 					script[ i ] = node[ i ];
+				} else if ( node.getAttribute( i ) ) {
+
+					// Support: Firefox 64+, Edge 18+
+					// Some browsers don't support the "nonce" property on scripts.
+					// On the other hand, just using `setAttribute` & `getAttribute`
+					// is not enough as `nonce` is no longer exposed as an attribute
+					// in the latest standard.
+					// See https://github.com/whatwg/html/issues/2369
+					script.setAttribute( i, node.getAttribute( i ) );
 				}
 			}
 		}
