@@ -3143,7 +3143,7 @@ jQuery.each( {
 		return siblings( elem.firstChild );
 	},
 	contents: function( elem ) {
-		if ( typeof elem.contentDocument !== "undefined" ) {
+		if ( elem.contentDocument != null ) {
 			return elem.contentDocument;
 		}
 
