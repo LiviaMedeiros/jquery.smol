@@ -3784,6 +3784,8 @@ var documentElement = document.documentElement;
 				elem.getRootNode( composed ) === elem.ownerDocument;
 		};
 	}
+var isIE = document.documentMode;
+
 var rcheckableType = ( /^(?:checkbox|radio)$/i );
 
 var rtagName = ( /<([a-z][^\/\0>\x20\t\r\n\f]*)/i );
@@ -3936,25 +3938,6 @@ function buildFragment( elems, context, scripts, selection, ignored ) {
 
 	return fragment;
 }
-
-
-( function() {
-	var fragment = document.createDocumentFragment(),
-		div = fragment.appendChild( document.createElement( "div" ) ),
-		input = document.createElement( "input" );
-
-	// Support: Windows Web Apps (WWA)
-	// `name` and `type` must use .setAttribute for WWA (#14901)
-	input.setAttribute( "type", "radio" );
-	input.setAttribute( "checked", "checked" );
-
-	div.appendChild( input );
-
-	// Support: IE <=11+
-	// Make sure textarea (and checkbox) defaultValue is properly cloned
-	div.innerHTML = "<textarea>x</textarea>";
-	support.noCloneChecked = !!div.cloneNode( true ).lastChild.defaultValue;
-} )();
 
 
 var
@@ -4992,7 +4975,7 @@ jQuery.extend( {
 			inPage = isAttached( elem );
 
 		// Fix IE cloning issues
-		if ( !support.noCloneChecked && ( elem.nodeType === 1 || elem.nodeType === 11 ) &&
+		if ( isIE && ( elem.nodeType === 1 || elem.nodeType === 11 ) &&
 				!jQuery.isXMLDoc( elem ) ) {
 
 			// We eschew Sizzle here for performance reasons: https://jsperf.com/getall-vs-sizzle/2
@@ -5003,7 +4986,7 @@ jQuery.extend( {
 
 				// Support: IE <=11+
 				// IE fails to set the defaultValue to the correct value when
-				// cloning other types of input fields
+				// cloning textareas.
 				if ( destElements[ i ].nodeName.toLowerCase() === "textarea" ) {
 					destElements[ i ].defaultValue = srcElements[ i ].defaultValue;
 				}
@@ -5275,55 +5258,6 @@ function curCSS( elem, name, computed ) {
 }
 
 
-( function() {
-
-	var boxSizingReliableVal,
-		container = document.createElement( "div" ),
-		div = document.createElement( "div" );
-
-	// Finish early in limited (non-browser) environments
-	if ( !div.style ) {
-		return;
-	}
-
-	// Support: IE <=9 - 11+
-	// Style of cloned element affects source element cloned (#8908)
-	div.style.backgroundClip = "content-box";
-	div.cloneNode( true ).style.backgroundClip = "";
-	support.clearCloneStyle = div.style.backgroundClip === "content-box";
-
-	jQuery.extend( support, {
-		boxSizingReliable: function() {
-
-			// This is a singleton, we need to execute it only once
-			if ( div ) {
-				container.style.cssText = "position:absolute;left:-11111px;width:60px;" +
-					"margin-top:1px;padding:0;border:0";
-				div.style.cssText =
-					"position:relative;display:block;box-sizing:border-box;overflow:scroll;" +
-					"margin:auto;border:1px;padding:1px;" +
-					"width:60%;top:1%";
-				documentElement.appendChild( container ).appendChild( div );
-
-				var divStyle = window.getComputedStyle( div );
-
-				// Support: IE 9 - 11+
-				// Detect misreporting of content dimensions for box-sizing:border-box elements
-				boxSizingReliableVal = Math.round( parseFloat( divStyle.width ) ) === 36;
-
-				documentElement.removeChild( container );
-
-				// Nullify the div so it wouldn't be stored in the memory and
-				// it will also be a sign that checks already performed
-				div = null;
-			}
-
-			return boxSizingReliableVal;
-		}
-	} );
-} )();
-
-
 var cssPrefixes = [ "Webkit", "Moz", "ms" ],
 	emptyStyle = document.createElement( "div" ).style,
 	vendorProps = {};
@@ -5457,7 +5391,7 @@ function getWidthOrHeight( elem, dimension, extra ) {
 
 		// To avoid forcing a reflow, only fetch boxSizing if we need it (gh-4322).
 		// Fake content-box until we know it's needed to know the true value.
-		boxSizingNeeded = !support.boxSizingReliable() || extra,
+		boxSizingNeeded = isIE || extra,
 		isBorderBox = boxSizingNeeded &&
 			jQuery.css( elem, "boxSizing", false, styles ) === "border-box",
 		valueIsBorderBox = isBorderBox,
@@ -5476,11 +5410,12 @@ function getWidthOrHeight( elem, dimension, extra ) {
 
 	// Fall back to offsetWidth/offsetHeight when value is "auto"
 	// This happens for inline elements with no explicit setting (gh-3571)
+	//
 	// Support: IE 9 - 11+
 	// Also use offsetWidth/offsetHeight for when box sizing is unreliable
 	// We use getClientRects() to check for hidden/disconnected.
 	// In those cases, the computed value can be trusted to be border-box
-	if ( ( !support.boxSizingReliable() && isBorderBox || val === "auto" ) &&
+	if ( ( isIE && isBorderBox || val === "auto" ) &&
 		elem.getClientRects().length ) {
 
 		isBorderBox = jQuery.css( elem, "boxSizing", false, styles ) === "border-box";
@@ -5575,8 +5510,9 @@ jQuery.extend( {
 				value += ret && ret[ 3 ] || ( isAutoPx( origName ) ? "px" : "" );
 			}
 
-			// background-* props affect original clone's values
-			if ( !support.clearCloneStyle && value === "" && name.indexOf( "background" ) === 0 ) {
+			// Support: IE <=9 - 11+
+			// background-* props of a cloned element affect the source element (#8908)
+			if ( isIE && value === "" && name.indexOf( "background" ) === 0 ) {
 				style[ name ] = "inherit";
 			}
 
@@ -5752,26 +5688,6 @@ jQuery.fn.extend( {
 } );
 
 
-( function() {
-	var input = document.createElement( "input" ),
-		select = document.createElement( "select" ),
-		opt = select.appendChild( document.createElement( "option" ) );
-
-	input.type = "checkbox";
-
-	// Support: IE <=11+
-	// Must access selectedIndex to make default options select
-	support.optSelected = opt.selected;
-
-	// Support: IE <=11+
-	// An input loses its value after becoming a radio
-	input = document.createElement( "input" );
-	input.value = "t";
-	input.type = "radio";
-	support.radioValue = input.value === "t";
-} )();
-
-
 var boolHook,
 	attrHandle = jQuery.expr.attrHandle;
 
@@ -5837,8 +5753,10 @@ jQuery.extend( {
 	attrHooks: {
 		type: {
 			set: function( elem, value ) {
-				if ( !support.radioValue && value === "radio" &&
-					nodeName( elem, "input" ) ) {
+
+				// Support: IE <=11+
+				// An input loses its value after becoming a radio
+				if ( isIE && value === "radio" && nodeName( elem, "input" ) ) {
 					var val = elem.value;
 					elem.setAttribute( "type", value );
 					if ( val ) {
