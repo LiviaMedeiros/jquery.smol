@@ -531,6 +531,14 @@ var pop = arr.pop;
 
 
 
+// Support: IE 9 - 11+, Edge 12 - 18+
+// IE/Edge don't support the :scope pseudo-class.
+try {
+	document.querySelectorAll( ":scope" );
+	support.scope = true;
+} catch ( e ) {}
+
+
 // Note: an element does not contain itself
 jQuery.contains = function( a, b ) {
 	var adown = a.nodeType === 9 ? a.documentElement : a,
@@ -868,24 +876,30 @@ function find( selector, context, results, seed ) {
 				// Thanks to Andrew Dupont for this technique.
 				if ( nodeType === 1 && rdescend.test( selector ) ) {
 
-					// Capture the context ID, setting it first if necessary
-					if ( ( nid = context.getAttribute( "id" ) ) ) {
-						nid = jQuery.escapeSelector( nid );
-					} else {
-						context.setAttribute( "id", ( nid = expando ) );
+					// Expand context for sibling selectors
+					newContext = rsibling.test( selector ) && testContext( context.parentNode ) ||
+						context;
+
+					// We can use :scope instead of the ID hack if the browser
+					// supports it & if we're not changing the context.
+					if ( newContext !== context || !support.scope ) {
+
+						// Capture the context ID, setting it first if necessary
+						if ( ( nid = context.getAttribute( "id" ) ) ) {
+							nid = jQuery.escapeSelector( nid );
+						} else {
+							context.setAttribute( "id", ( nid = expando ) );
+						}
 					}
 
 					// Prefix every selector in the list
 					groups = tokenize( selector );
 					i = groups.length;
 					while ( i-- ) {
-						groups[ i ] = "#" + nid + " " + toSelector( groups[ i ] );
+						groups[ i ] = ( nid ? "#" + nid : ":scope" ) + " " +
+							toSelector( groups[ i ] );
 					}
 					newSelector = groups.join( "," );
-
-					// Expand context for sibling selectors
-					newContext = rsibling.test( selector ) && testContext( context.parentNode ) ||
-						context;
 				}
 
 				try {
