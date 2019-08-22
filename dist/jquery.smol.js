@@ -59,8 +59,6 @@ var fnToString = hasOwn.toString;
 
 var ObjectFunctionString = fnToString.call( Object );
 
-var trim = "".trim;
-
 var support = {};
 
 var isWindow = function isWindow( obj ) {
@@ -397,9 +395,6 @@ jQuery.extend( {
 		return ret;
 	},
 
-	trim: function( text ) {
-		return text == null ? "" : trim.call( text );
-	},
 
 	// results is for internal usage only
 	makeArray: function( arr, results ) {
@@ -5784,6 +5779,8 @@ jQuery.parseHTML = function( data, context, keepScripts ) {
 
 	return jQuery.merge( [], parsed.childNodes );
 };
+var trim = "".trim;
+
 
 
 jQuery.each( ( "blur focus focusin focusout resize scroll click dblclick " +
