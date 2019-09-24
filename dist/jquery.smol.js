@@ -218,13 +218,7 @@ jQuery.fn = jQuery.prototype = {
 
 	end: function() {
 		return this.prevObject || this.constructor();
-	},
-
-	// For internal use only.
-	// Behaves like an Array's method, not like a jQuery method.
-	push: push,
-	sort: arr.sort,
-	splice: arr.splice
+	}
 };
 
 jQuery.extend = jQuery.fn.extend = function() {
@@ -614,6 +608,8 @@ jQuery.escapeSelector = function( sel ) {
 };
 
 
+var sort = arr.sort;
+
 
 
 var hasDuplicate;
@@ -672,7 +668,7 @@ jQuery.uniqueSort = function( results ) {
 
 	hasDuplicate = false;
 
-	results.sort( sortOrder );
+	sort.call( results, sortOrder );
 
 	if ( hasDuplicate ) {
 		while ( ( elem = results[ i++ ] ) ) {
@@ -865,7 +861,7 @@ function find( selector, context, results, seed ) {
 					// Document context
 					if ( nodeType === 9 ) {
 						if ( ( elem = context.getElementById( m ) ) ) {
-							results.push( elem );
+							push.call( results, elem );
 						}
 						return results;
 
@@ -874,7 +870,7 @@ function find( selector, context, results, seed ) {
 						if ( newContext && ( elem = newContext.getElementById( m ) ) &&
 							jQuery.contains( context, elem ) ) {
 
-							results.push( elem );
+							push.call( results, elem );
 							return results;
 						}
 					}
@@ -2101,7 +2097,7 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 					}
 					while ( ( matcher = elementMatchers[ j++ ] ) ) {
 						if ( matcher( elem, context || document, xml ) ) {
-							results.push( elem );
+							push.call( results, elem );
 							break;
 						}
 					}
