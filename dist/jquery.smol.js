@@ -4805,6 +4805,36 @@ function curCSS( elem, name, computed ) {
 }
 
 
+var reliableTrDimensionsVal;
+
+// Support: IE 11+, Edge 15 - 18+
+// IE/Edge misreport `getComputedStyle` of table rows with width/height
+// set in CSS while `offset*` properties report correct values.
+support.reliableTrDimensions = function() {
+	var table, tr, trChild;
+	if ( reliableTrDimensionsVal == null ) {
+		table = document.createElement( "table" );
+		tr = document.createElement( "tr" );
+		trChild = document.createElement( "div" );
+
+		table.style.cssText = "position:absolute;left:-11111px";
+		tr.style.height = "1px";
+		trChild.style.height = "9px";
+
+		documentElement
+			.appendChild( table )
+			.appendChild( tr )
+			.appendChild( trChild );
+
+		var trStyle = window.getComputedStyle( tr );
+		reliableTrDimensionsVal = parseInt( trStyle.height ) > 3;
+
+		documentElement.removeChild( table );
+	}
+	return reliableTrDimensionsVal;
+};
+
+
 var cssPrefixes = [ "Webkit", "Moz", "ms" ],
 	emptyStyle = document.createElement( "div" ).style,
 	vendorProps = {};
@@ -4955,14 +4985,21 @@ function getWidthOrHeight( elem, dimension, extra ) {
 	}
 
 
-	// Fall back to offsetWidth/offsetHeight when value is "auto"
-	// This happens for inline elements with no explicit setting (gh-3571)
-	//
 	// Support: IE 9 - 11+
-	// Also use offsetWidth/offsetHeight for when box sizing is unreliable
-	// We use getClientRects() to check for hidden/disconnected.
-	// In those cases, the computed value can be trusted to be border-box
-	if ( ( isIE && isBorderBox || val === "auto" ) &&
+	// Use offsetWidth/offsetHeight for when box sizing is unreliable.
+	// In those cases, the computed value can be trusted to be border-box.
+	if ( ( isIE && isBorderBox ||
+
+		// Support: IE 10 - 11+, Edge 15 - 18+
+		// IE/Edge misreport `getComputedStyle` of table rows with width/height
+		// set in CSS while `offset*` properties report correct values.
+		!support.reliableTrDimensions() && nodeName( elem, "tr" ) ||
+
+		// Fall back to offsetWidth/offsetHeight when value is "auto"
+		// This happens for inline elements with no explicit setting (gh-3571)
+		val === "auto" ) &&
+
+		// Make sure the element is visible & connected
 		elem.getClientRects().length ) {
 
 		isBorderBox = jQuery.css( elem, "boxSizing", false, styles ) === "border-box";
