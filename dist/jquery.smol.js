@@ -1,5 +1,5 @@
 /*!
- * jQuery JavaScript Library v4.0.0-pre -core/ready,-ajax/jsonp,-ajax/load,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-attributes/val,-attributes/prop,-css/hiddenVisibleSelectors,-css/showHide,-effects,-effects/Tween,-effects/animatedSelector,-deferred/exceptionHook,-deprecated/event,-deprecated/ajax-event-alias,-queue/delay,-exports/amd,-manipulation/_evalUrl,-ajax,-ajax/parseXML,-event/ajax,-callbacks,-deferred,-queue,-deprecated,-dimensions,-offset,-serialize,-wrap
+ * jQuery JavaScript Library v4.0.0-pre -core/ready,-ajax/jsonp,-ajax/load,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-attributes/val,-attributes/prop,-css/hiddenVisibleSelectors,-css/showHide,-effects,-effects/Tween,-effects/animatedSelector,-deferred/exceptionHook,-deprecated/event,-deprecated/ajax-event-alias,-queue/delay,-exports/amd,-manipulation/_evalUrl,-ajax,-event/ajax,-callbacks,-deferred,-queue,-deprecated,-dimensions,-offset,-serialize,-wrap
  * https://jquery.com/
  *
  * Copyright JS Foundation and other contributors
@@ -121,7 +121,7 @@ function toType( obj ) {
 
 // When custom compilation is used, the version string can get large.
 // eslint-disable-next-line max-len
-var version = "4.0.0-pre -core/ready,-ajax/jsonp,-ajax/load,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-attributes/val,-attributes/prop,-css/hiddenVisibleSelectors,-css/showHide,-effects,-effects/Tween,-effects/animatedSelector,-deferred/exceptionHook,-deprecated/event,-deprecated/ajax-event-alias,-queue/delay,-exports/amd,-manipulation/_evalUrl,-ajax,-ajax/parseXML,-event/ajax,-callbacks,-deferred,-queue,-deprecated,-dimensions,-offset,-serialize,-wrap",
+var version = "4.0.0-pre -core/ready,-ajax/jsonp,-ajax/load,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-attributes/val,-attributes/prop,-css/hiddenVisibleSelectors,-css/showHide,-effects,-effects/Tween,-effects/animatedSelector,-deferred/exceptionHook,-deprecated/event,-deprecated/ajax-event-alias,-queue/delay,-exports/amd,-manipulation/_evalUrl,-ajax,-event/ajax,-callbacks,-deferred,-queue,-deprecated,-dimensions,-offset,-serialize,-wrap",
 
 	rhtmlSuffix = /HTML$/i,
 
@@ -5535,6 +5535,27 @@ jQuery.fn.extend( {
 		}, name, value, arguments.length > 1 );
 	}
 } );
+
+// Cross-browser xml parsing
+jQuery.parseXML = function( data ) {
+	var xml;
+	if ( !data || typeof data !== "string" ) {
+		return null;
+	}
+
+	// Support: IE 9 - 11+
+	// IE throws on parseFromString with invalid input.
+	try {
+		xml = ( new window.DOMParser() ).parseFromString( data, "text/xml" );
+	} catch ( e ) {
+		xml = undefined;
+	}
+
+	if ( !xml || xml.getElementsByTagName( "parsererror" ).length ) {
+		jQuery.error( "Invalid XML: " + data );
+	}
+	return xml;
+};
 
 // Argument "data" should be string of html
 // context (optional): If specified, the fragment will be created in this context,
