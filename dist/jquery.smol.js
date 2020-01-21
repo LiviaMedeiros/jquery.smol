@@ -1,5 +1,5 @@
 /*!
- * jQuery JavaScript Library v4.0.0-pre -core/ready,-ajax/jsonp,-ajax/load,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-attributes/val,-attributes/prop,-css/hiddenVisibleSelectors,-css/showHide,-effects,-effects/Tween,-effects/animatedSelector,-deferred/exceptionHook,-deprecated/event,-deprecated/ajax-event-alias,-queue/delay,-exports/amd,-manipulation/_evalUrl,-ajax,-event/ajax,-callbacks,-deferred,-queue,-deprecated,-dimensions,-offset,-serialize,-wrap
+ * jQuery JavaScript Library v4.0.0-pre -core/ready,-ajax/jsonp,-ajax/load,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-attributes/val,-attributes/prop,-css/hiddenVisibleSelectors,-css/showHide,-effects,-effects/Tween,-effects/animatedSelector,-deferred/exceptionHook,-deprecated/event,-deprecated/ajax-event-alias,-queue/delay,-exports/amd,-manipulation/_evalUrl,-ajax,-callbacks,-deferred,-queue,-deprecated,-dimensions,-offset,-serialize,-wrap
  * https://jquery.com/
  *
  * Copyright JS Foundation and other contributors
@@ -121,7 +121,7 @@ function toType( obj ) {
 
 // When custom compilation is used, the version string can get large.
 // eslint-disable-next-line max-len
-var version = "4.0.0-pre -core/ready,-ajax/jsonp,-ajax/load,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-attributes/val,-attributes/prop,-css/hiddenVisibleSelectors,-css/showHide,-effects,-effects/Tween,-effects/animatedSelector,-deferred/exceptionHook,-deprecated/event,-deprecated/ajax-event-alias,-queue/delay,-exports/amd,-manipulation/_evalUrl,-ajax,-event/ajax,-callbacks,-deferred,-queue,-deprecated,-dimensions,-offset,-serialize,-wrap",
+var version = "4.0.0-pre -core/ready,-ajax/jsonp,-ajax/load,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-attributes/val,-attributes/prop,-css/hiddenVisibleSelectors,-css/showHide,-effects,-effects/Tween,-effects/animatedSelector,-deferred/exceptionHook,-deprecated/event,-deprecated/ajax-event-alias,-queue/delay,-exports/amd,-manipulation/_evalUrl,-ajax,-callbacks,-deferred,-queue,-deprecated,-dimensions,-offset,-serialize,-wrap",
 
 	rhtmlSuffix = /HTML$/i,
 
