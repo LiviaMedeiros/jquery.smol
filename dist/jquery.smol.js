@@ -3737,11 +3737,12 @@ jQuery.event = {
 
 	dispatch: function( nativeEvent ) {
 
-		// Make a writable jQuery.Event from the native event object
-		var event = jQuery.event.fix( nativeEvent );
-
 		var i, j, ret, matched, handleObj, handlerQueue,
 			args = new Array( arguments.length ),
+
+			// Make a writable jQuery.Event from the native event object
+			event = jQuery.event.fix( nativeEvent ),
+
 			handlers = ( dataPriv.get( this, "events" ) || {} )[ event.type ] || [],
 			special = jQuery.event.special[ event.type ] || {};
 
@@ -5075,7 +5076,7 @@ var reliableTrDimensionsVal;
 // IE/Edge misreport `getComputedStyle` of table rows with width/height
 // set in CSS while `offset*` properties report correct values.
 support.reliableTrDimensions = function() {
-	var table, tr, trChild;
+	var table, tr, trChild, trStyle;
 	if ( reliableTrDimensionsVal == null ) {
 		table = document.createElement( "table" );
 		tr = document.createElement( "tr" );
@@ -5090,7 +5091,7 @@ support.reliableTrDimensions = function() {
 			.appendChild( tr )
 			.appendChild( trChild );
 
-		var trStyle = window.getComputedStyle( tr );
+		trStyle = window.getComputedStyle( tr );
 		reliableTrDimensionsVal = parseInt( trStyle.height ) > 3;
 
 		documentElement.removeChild( table );
