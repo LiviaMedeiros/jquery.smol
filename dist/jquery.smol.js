@@ -45,7 +45,9 @@ var slice = arr.slice;
 
 // Support: IE 11+, Edge 18+
 // Provide fallback for browsers without Array#flat.
-var flat = function( array ) {
+var flat = arr.flat ? function( array ) {
+	return arr.flat.call( array );
+} : function( array ) {
 	return arr.concat.apply( [], array );
 };
 
@@ -4507,7 +4509,6 @@ var rtagName = ( /<([a-z][^\/\0>\x20\t\r\n\f]*)/i );
 
 var rscriptType = ( /^$|^module$|\/(?:java|ecma)script/i );
 
-// We have to close these tags to support XHTML (#13200)
 var wrapMap = {
 
 	// Table parts need to be wrapped with `<table>` or they're
@@ -4515,12 +4516,10 @@ var wrapMap = {
 	// XHTML parsers do not magically insert elements in the
 	// same way that tag soup parsers do, so we cannot shorten
 	// this by omitting <tbody> or other required elements.
-	thead: [ 1, "<table>", "</table>" ],
-	col: [ 2, "<table><colgroup>", "</colgroup></table>" ],
-	tr: [ 2, "<table><tbody>", "</tbody></table>" ],
-	td: [ 3, "<table><tbody><tr>", "</tr></tbody></table>" ],
-
-	_default: [ 0, "", "" ]
+	thead: [ "table" ],
+	col: [ "colgroup", "table" ],
+	tr: [ "tbody", "table" ],
+	td: [ "tr", "tbody", "table" ]
 };
 
 wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
@@ -4591,14 +4590,15 @@ function buildFragment( elems, context, scripts, selection, ignored ) {
 
 				// Deserialize a standard representation
 				tag = ( rtagName.exec( elem ) || [ "", "" ] )[ 1 ].toLowerCase();
-				wrap = wrapMap[ tag ] || wrapMap._default;
-				tmp.innerHTML = wrap[ 1 ] + jQuery.htmlPrefilter( elem ) + wrap[ 2 ];
+				wrap = wrapMap[ tag ] || arr;
 
-				// Descend through wrappers to the right content
-				j = wrap[ 0 ];
-				while ( j-- ) {
-					tmp = tmp.lastChild;
+				// Create wrappers & descend into them.
+				j = wrap.length;
+				while ( --j > -1 ) {
+					tmp = tmp.appendChild( context.createElement( wrap[ j ] ) );
 				}
+
+				tmp.innerHTML = jQuery.htmlPrefilter( elem );
 
 				jQuery.merge( nodes, tmp.childNodes );
 
