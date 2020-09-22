@@ -43,8 +43,8 @@ var getProto = Object.getPrototypeOf;
 
 var slice = arr.slice;
 
-// Support: IE 11+, Edge 18+
-// Provide fallback for browsers without Array#flat.
+// Support: IE 11+
+// IE doesn't have Array#flat; provide a fallback.
 var flat = arr.flat ? function( array ) {
 	return arr.flat.call( array );
 } : function( array ) {
@@ -85,26 +85,14 @@ var preservedScriptAttributes = {
 function DOMEval( code, node, doc ) {
 	doc = doc || document;
 
-	var i, val,
+	var i,
 		script = doc.createElement( "script" );
 
 	script.text = code;
 	if ( node ) {
 		for ( i in preservedScriptAttributes ) {
-
-			// Support: Firefox <=64 - 66+, Edge <=18+
-			// Some browsers don't support the "nonce" property on scripts.
-			// On the other hand, just using `getAttribute` is not enough as
-			// the `nonce` attribute is reset to an empty string whenever it
-			// becomes browsing-context connected.
-			// See https://github.com/whatwg/html/issues/2369
-			// See https://html.spec.whatwg.org/#nonce-attributes
-			// The `node.getAttribute` check was added for the sake of
-			// `jQuery.globalEval` so that it can fake a nonce-containing node
-			// via an object.
-			val = node[ i ] || node.getAttribute && node.getAttribute( i );
-			if ( val ) {
-				script.setAttribute( i, val );
+			if ( node[ i ] ) {
+				script[ i ] = node[ i ];
 			}
 		}
 	}
@@ -380,18 +368,7 @@ jQuery.extend( {
 				ret += jQuery.text( node );
 			}
 		} else if ( nodeType === 1 || nodeType === 9 || nodeType === 11 ) {
-
-			// Use textContent for elements
-			// innerText usage removed for consistency of new lines (jQuery #11153)
-			if ( typeof elem.textContent === "string" ) {
-				return elem.textContent;
-			} else {
-
-				// Traverse its children
-				for ( elem = elem.firstChild; elem; elem = elem.nextSibling ) {
-					ret += jQuery.text( elem );
-				}
-			}
+			return elem.textContent;
 		} else if ( nodeType === 3 || nodeType === 4 ) {
 			return elem.nodeValue;
 		}
@@ -544,38 +521,20 @@ var whitespace = "[\\x20\\t\\r\\n\\f]";
 
 var isIE = document.documentMode;
 
-var rbuggyQSA = [],
-	testEl = document.createElement( "div" ),
-	input = document.createElement( "input" );
+var rbuggyQSA = isIE && new RegExp(
 
-// Support: IE 9 - 11+
-// IE's :disabled selector does not pick up the children of disabled fieldsets
-if ( isIE ) {
-	rbuggyQSA.push( ":enabled", ":disabled" );
-}
+	// Support: IE 9 - 11+
+	// IE's :disabled selector does not pick up the children of disabled fieldsets
+	":enabled|:disabled|" +
 
-// Support: IE 11+, Edge 15 - 18+
-// IE 11/Edge don't find elements on a `[name='']` query in some cases.
-// Adding a temporary attribute to the document before the selection works
-// around the issue.
-// Interestingly, IE 10 & older don't seem to have the issue.
-input.setAttribute( "name", "" );
-testEl.appendChild( input );
-if ( !testEl.querySelectorAll( "[name='']" ).length ) {
-	rbuggyQSA.push( "\\[" + whitespace + "*name" + whitespace + "*=" +
-		whitespace + "*(?:''|\"\")" );
-}
+	// Support: IE 11+
+	// IE 11 doesn't find elements on a `[name='']` query in some cases.
+	// Adding a temporary attribute to the document before the selection works
+	// around the issue.
+	"\\[" + whitespace + "*name" + whitespace + "*=" +
+		whitespace + "*(?:''|\"\")"
 
-rbuggyQSA = rbuggyQSA.length && new RegExp( rbuggyQSA.join( "|" ) );
-
-var rbuggyQSA$1 = rbuggyQSA;
-
-// Support: IE 9 - 11+, Edge 12 - 18+
-// IE/Edge don't support the :scope pseudo-class.
-try {
-	document.querySelectorAll( ":scope" );
-	support.scope = true;
-} catch ( e ) {}
+);
 
 // Note: an element does not contain itself
 jQuery.contains = function( a, b ) {
@@ -636,8 +595,8 @@ function sortOrder( a, b ) {
 	}
 
 	// Calculate position if both inputs belong to the same document
-	// Support: IE 11+, Edge 17 - 18+
-	// IE/Edge sometimes throw a "Permission denied" error when strict-comparing
+	// Support: IE 11+
+	// IE sometimes throws a "Permission denied" error when strict-comparing
 	// two documents; shallow comparisons work.
 	// eslint-disable-next-line eqeqeq
 	compare = ( a.ownerDocument || a ) == ( b.ownerDocument || b ) ?
@@ -650,8 +609,8 @@ function sortOrder( a, b ) {
 	if ( compare & 1 ) {
 
 		// Choose the first element that is related to the document
-		// Support: IE 11+, Edge 17 - 18+
-		// IE/Edge sometimes throw a "Permission denied" error when strict-comparing
+		// Support: IE 11+
+		// IE sometimes throws a "Permission denied" error when strict-comparing
 		// two documents; shallow comparisons work.
 		// eslint-disable-next-line eqeqeq
 		if ( a == document || a.ownerDocument == document &&
@@ -659,8 +618,8 @@ function sortOrder( a, b ) {
 			return -1;
 		}
 
-		// Support: IE 11+, Edge 17 - 18+
-		// IE/Edge sometimes throw a "Permission denied" error when strict-comparing
+		// Support: IE 11+
+		// IE sometimes throws a "Permission denied" error when strict-comparing
 		// two documents; shallow comparisons work.
 		// eslint-disable-next-line eqeqeq
 		if ( b == document || b.ownerDocument == document &&
@@ -820,9 +779,9 @@ var i,
 	},
 
 	// Used for iframes; see `setDocument`.
-	// Support: IE 9 - 11+, Edge 12 - 18+
+	// Support: IE 9 - 11+
 	// Removing the function wrapper causes a "Permission Denied"
-	// error in IE/Edge.
+	// error in IE.
 	unloadHandler = function() {
 		setDocument();
 	},
@@ -899,7 +858,7 @@ function find( selector, context, results, seed ) {
 
 			// Take advantage of querySelectorAll
 			if ( !nonnativeSelectorCache[ selector + " " ] &&
-				( !rbuggyQSA$1 || !rbuggyQSA$1.test( selector ) ) ) {
+				( !rbuggyQSA || !rbuggyQSA.test( selector ) ) ) {
 
 				newSelector = selector;
 				newContext = context;
@@ -918,9 +877,9 @@ function find( selector, context, results, seed ) {
 					newContext = rsibling.test( selector ) && testContext( context.parentNode ) ||
 						context;
 
-					// We can use :scope instead of the ID hack if the browser
-					// supports it & if we're not changing the context.
-					if ( newContext !== context || !support.scope ) {
+					// Outside of IE, if we're not changing the context we can
+					// use :scope instead of an ID.
+					if ( newContext !== context || isIE ) {
 
 						// Capture the context ID, setting it first if necessary
 						if ( ( nid = context.getAttribute( "id" ) ) ) {
@@ -1049,7 +1008,6 @@ function createDisabledPseudo( disabled ) {
 				return elem.isDisabled === disabled ||
 
 					// Where there is no isDisabled, check manually
-					/* jshint -W018 */
 					elem.isDisabled !== !disabled &&
 						inDisabledFieldset( elem ) === disabled;
 			}
@@ -1108,8 +1066,8 @@ function setDocument( node ) {
 		doc = node ? node.ownerDocument || node : preferredDoc;
 
 	// Return early if doc is invalid or already selected
-	// Support: IE 11+, Edge 17 - 18+
-	// IE/Edge sometimes throw a "Permission denied" error when strict-comparing
+	// Support: IE 11+
+	// IE sometimes throws a "Permission denied" error when strict-comparing
 	// two documents; shallow comparisons work.
 	// eslint-disable-next-line eqeqeq
 	if ( doc == document || doc.nodeType !== 9 ) {
@@ -1121,16 +1079,14 @@ function setDocument( node ) {
 	documentElement = document.documentElement;
 	documentIsHTML = !jQuery.isXMLDoc( document );
 
-	// Support: IE 9 - 11+, Edge 12 - 18+
+	// Support: IE 9 - 11+
 	// Accessing iframe documents after unload throws "permission denied" errors (jQuery #13936)
-	// Support: IE 11+, Edge 17 - 18+
-	// IE/Edge sometimes throw a "Permission denied" error when strict-comparing
+	// Support: IE 11+
+	// IE sometimes throws a "Permission denied" error when strict-comparing
 	// two documents; shallow comparisons work.
 	// eslint-disable-next-line eqeqeq
-	if ( preferredDoc != document &&
+	if ( isIE && preferredDoc != document &&
 		( subWindow = document.defaultView ) && subWindow.top !== subWindow ) {
-
-		// Support: IE 9 - 11+, Edge 12 - 18+
 		subWindow.addEventListener( "unload", unloadHandler );
 	}
 }
@@ -1144,7 +1100,7 @@ find.matchesSelector = function( elem, expr ) {
 
 	if ( documentIsHTML &&
 		!nonnativeSelectorCache[ expr + " " ] &&
-		( !rbuggyQSA$1 || !rbuggyQSA$1.test( expr ) ) ) {
+		( !rbuggyQSA || !rbuggyQSA.test( expr ) ) ) {
 
 		try {
 			return matches.call( elem, expr );
@@ -1617,7 +1573,7 @@ Expr = jQuery.expr = {
 			// Accessing the selectedIndex property
 			// forces the browser to treat the default option as
 			// selected when in an optgroup.
-			if ( elem.parentNode ) {
+			if ( isIE && elem.parentNode ) {
 				// eslint-disable-next-line no-unused-expressions
 				elem.parentNode.selectedIndex;
 			}
@@ -2101,8 +2057,8 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 
 			if ( outermost ) {
 
-				// Support: IE 11+, Edge 17 - 18+
-				// IE/Edge sometimes throw a "Permission denied" error when strict-comparing
+				// Support: IE 11+
+				// IE sometimes throws a "Permission denied" error when strict-comparing
 				// two documents; shallow comparisons work.
 				// eslint-disable-next-line eqeqeq
 				outermostContext = context == document || context || outermost;
@@ -2113,8 +2069,8 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 				if ( byElement && elem ) {
 					j = 0;
 
-					// Support: IE 11+, Edge 17 - 18+
-					// IE/Edge sometimes throw a "Permission denied" error when strict-comparing
+					// Support: IE 11+
+					// IE sometimes throws a "Permission denied" error when strict-comparing
 					// two documents; shallow comparisons work.
 					// eslint-disable-next-line eqeqeq
 					if ( !context && elem.ownerDocument != document ) {
@@ -4430,16 +4386,17 @@ jQuery.fn.extend( {
 } );
 
 var isAttached = function( elem ) {
-		return jQuery.contains( elem.ownerDocument, elem );
+		return jQuery.contains( elem.ownerDocument, elem ) ||
+			elem.getRootNode( composed ) === elem.ownerDocument;
 	},
 	composed = { composed: true };
 
-// Support: IE 9 - 11+, Edge 12 - 18+
-// Check attachment across shadow DOM boundaries when possible (gh-3504)
-if ( documentElement.getRootNode ) {
+// Support: IE 9 - 11+
+// Check attachment across shadow DOM boundaries when possible (gh-3504).
+// Provide a fallback for browsers without Shadow DOM v1 support.
+if ( !documentElement.getRootNode ) {
 	isAttached = function( elem ) {
-		return jQuery.contains( elem.ownerDocument, elem ) ||
-			elem.getRootNode( composed ) === elem.ownerDocument;
+		return jQuery.contains( elem.ownerDocument, elem );
 	};
 }
 
@@ -4594,9 +4551,8 @@ function buildFragment( elems, context, scripts, selection, ignored ) {
 
 var
 
-	// Support: IE <=10 - 11+, Edge 12 - 13 only
-	// In IE/Edge using regex groups here causes severe slowdowns.
-	// See https://connect.microsoft.com/IE/feedback/details/1736512/
+	// Support: IE <=10 - 11+
+	// In IE using regex groups here causes severe slowdowns.
 	rnoInnerhtml = /<script|<style|<link/i,
 
 	rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
@@ -4728,7 +4684,7 @@ function domManip( collection, args, callback, ignored ) {
 							// Optional AJAX dependency, but won't run scripts if not present
 							if ( jQuery._evalUrl && !node.noModule ) {
 								jQuery._evalUrl( node.src, {
-									nonce: node.nonce || node.getAttribute( "nonce" ),
+									nonce: node.nonce,
 									crossOrigin: node.crossOrigin
 								}, doc );
 							}
@@ -5065,7 +5021,7 @@ var rmsPrefix = /^-ms-/;
 
 // Convert dashed to camelCase, handle vendor prefixes.
 // Used by the css & effects modules.
-// Support: IE <=9 - 11+, Edge 12 - 18+
+// Support: IE <=9 - 11+
 // Microsoft forgot to hump their vendor prefix (#9572)
 function cssCamelCase( string ) {
 	return camelCase( string.replace( rmsPrefix, "ms-" ) );
@@ -5194,35 +5150,6 @@ function adjustCSS( elem, prop, valueParts, tween ) {
 	}
 	return adjusted;
 }
-
-var reliableTrDimensionsVal;
-
-// Support: IE 11+, Edge 15 - 18+
-// IE/Edge misreport `getComputedStyle` of table rows with width/height
-// set in CSS while `offset*` properties report correct values.
-support.reliableTrDimensions = function() {
-	var table, tr, trChild, trStyle;
-	if ( reliableTrDimensionsVal == null ) {
-		table = document.createElement( "table" );
-		tr = document.createElement( "tr" );
-		trChild = document.createElement( "div" );
-
-		table.style.cssText = "position:absolute;left:-11111px";
-		tr.style.height = "1px";
-		trChild.style.height = "9px";
-
-		documentElement
-			.appendChild( table )
-			.appendChild( tr )
-			.appendChild( trChild );
-
-		trStyle = window.getComputedStyle( tr );
-		reliableTrDimensionsVal = parseInt( trStyle.height ) > 3;
-
-		documentElement.removeChild( table );
-	}
-	return reliableTrDimensionsVal;
-};
 
 var cssPrefixes = [ "Webkit", "Moz", "ms" ],
 	emptyStyle = document.createElement( "div" ).style,
@@ -5373,15 +5300,19 @@ function getWidthOrHeight( elem, dimension, extra ) {
 	}
 
 
-	// Support: IE 9 - 11+
-	// Use offsetWidth/offsetHeight for when box sizing is unreliable.
-	// In those cases, the computed value can be trusted to be border-box.
-	if ( ( isIE && isBorderBox ||
+	if ( ( isIE &&
+		(
 
-		// Support: IE 10 - 11+, Edge 15 - 18+
-		// IE/Edge misreport `getComputedStyle` of table rows with width/height
-		// set in CSS while `offset*` properties report correct values.
-		!support.reliableTrDimensions() && nodeName( elem, "tr" ) ||
+			// Support: IE 9 - 11+
+			// Use offsetWidth/offsetHeight for when box sizing is unreliable.
+			// In those cases, the computed value can be trusted to be border-box.
+			isBorderBox ||
+
+			// Support: IE 10 - 11+
+			// IE misreports `getComputedStyle` of table rows with width/height
+			// set in CSS while `offset*` properties report correct values.
+			nodeName( elem, "tr" )
+		) ||
 
 		// Fall back to offsetWidth/offsetHeight when value is "auto"
 		// This happens for inline elements with no explicit setting (gh-3571)
