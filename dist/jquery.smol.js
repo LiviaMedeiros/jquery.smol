@@ -4565,9 +4565,7 @@ var
 
 	// Support: IE <=10 - 11+
 	// In IE using regex groups here causes severe slowdowns.
-	rnoInnerhtml = /<script|<style|<link/i,
-
-	rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
+	rnoInnerhtml = /<script|<style|<link/i;
 
 // Prefer a tbody over its parent table for containing new rows
 function manipulationTarget( elem, content ) {
@@ -4701,7 +4699,7 @@ function domManip( collection, args, callback, ignored ) {
 								}, doc );
 							}
 						} else {
-							DOMEval( node.textContent.replace( rcleanScript, "" ), node, doc );
+							DOMEval( node.textContent, node, doc );
 						}
 					}
 				}
