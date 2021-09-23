@@ -536,6 +536,11 @@ var rbuggyQSA = isIE && new RegExp(
 
 );
 
+var rtrim = new RegExp(
+	"^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$",
+	"g"
+);
+
 // Note: an element does not contain itself
 jQuery.contains = function( a, b ) {
 	var adown = a.nodeType === 9 ? a.documentElement : a,
@@ -719,7 +724,6 @@ var i,
 
 	// Leading and non-escaped trailing whitespace, capturing some non-whitespace characters preceding the latter
 	rwhitespace = new RegExp( whitespace + "+", "g" ),
-	rtrim = new RegExp( "^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g" ),
 
 	rcomma = new RegExp( "^" + whitespace + "*," + whitespace + "*" ),
 	rcombinators = new RegExp( "^" + whitespace + "*([>+~]|" + whitespace + ")" +
@@ -4990,6 +4994,8 @@ var rcssNum = new RegExp( "^(?:([+-])=|)(" + pnum + ")([a-z%]*)$", "i" );
 
 var rnumnonpx = new RegExp( "^(" + pnum + ")(?!px)[a-z%]+$", "i" );
 
+var rcustomProp = ( /^--/ );
+
 var cssExpand = [ "Top", "Right", "Bottom", "Left" ];
 
 var ralphaStart = /^[a-z]/,
@@ -5075,13 +5081,19 @@ function swap( elem, options, callback ) {
 }
 
 function curCSS( elem, name, computed ) {
-	var ret;
+	var ret,
+		isCustomProp = rcustomProp.test( name );
 
 	computed = computed || getStyles( elem );
 
 	// getPropertyValue is needed for `.css('--customProperty')` (gh-3144)
 	if ( computed ) {
 		ret = computed.getPropertyValue( name ) || computed[ name ];
+
+		// trim whitespace for custom property (issue gh-4926)
+		if ( isCustomProp ) {
+			ret = ret.replace( rtrim, "$1" );
+		}
 
 		if ( ret === "" && !isAttached$1( elem ) ) {
 			ret = jQuery.style( elem, name );
@@ -5255,7 +5267,6 @@ var
 	// except "table", "table-cell", or "table-caption"
 	// See here for display values: https://developer.mozilla.org/en-US/docs/CSS/display
 	rdisplayswap = /^(none|table(?!-c[ea]).+)/,
-	rcustomProp = /^--/,
 	cssShow = { position: "absolute", visibility: "hidden", display: "block" },
 	cssNormalTransform = {
 		letterSpacing: "0",
