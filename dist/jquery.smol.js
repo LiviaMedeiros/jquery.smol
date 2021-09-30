@@ -69,8 +69,31 @@ var ObjectFunctionString = fnToString.call( Object );
 // All support tests are defined in their respective modules.
 var support = {};
 
+function toType( obj ) {
+	if ( obj == null ) {
+		return obj + "";
+	}
+
+	return typeof obj === "object" ?
+		class2type[ toString.call( obj ) ] || "object" :
+		typeof obj;
+}
+
 function isWindow( obj ) {
 	return obj != null && obj === obj.window;
+}
+
+function isArrayLike( obj ) {
+
+	var length = !!obj && obj.length,
+		type = toType( obj );
+
+	if ( typeof obj === "function" || isWindow( obj ) ) {
+		return false;
+	}
+
+	return type === "array" || length === 0 ||
+		typeof length === "number" && length > 0 && ( length - 1 ) in obj;
 }
 
 var document = window.document;
@@ -97,16 +120,6 @@ function DOMEval( code, node, doc ) {
 		}
 	}
 	doc.head.appendChild( script ).parentNode.removeChild( script );
-}
-
-function toType( obj ) {
-	if ( obj == null ) {
-		return obj + "";
-	}
-
-	return typeof obj === "object" ?
-		class2type[ toString.call( obj ) ] || "object" :
-		typeof obj;
 }
 
 var version = "4.0.0-pre -core/ready,-ajax/jsonp,-ajax/load,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-attributes/val,-attributes/prop,-css/hiddenVisibleSelectors,-css/showHide,-effects,-effects/Tween,-effects/animatedSelector,-deferred/exceptionHook,-deprecated/event,-deprecated/ajax-event-alias,-queue/delay,-exports/amd,-manipulation/_evalUrl,-ajax,-callbacks,-deferred,-queue,-deprecated,-dimensions,-offset,-serialize,-wrap",
@@ -492,19 +505,6 @@ jQuery.each( "Boolean Number String Function Array Date RegExp Object Error Symb
 	function( _i, name ) {
 		class2type[ "[object " + name + "]" ] = name.toLowerCase();
 	} );
-
-function isArrayLike( obj ) {
-
-	var length = !!obj && obj.length,
-		type = toType( obj );
-
-	if ( typeof obj === "function" || isWindow( obj ) ) {
-		return false;
-	}
-
-	return type === "array" || length === 0 ||
-		typeof length === "number" && length > 0 && ( length - 1 ) in obj;
-}
 
 function nodeName( elem, name ) {
 
@@ -2320,6 +2320,12 @@ var rneedsContext = jQuery.expr.match.needsContext;
 // and captures the element's name
 var rsingleTag = ( /^<([a-z][^\/\0>:\x20\t\r\n\f]*)[\x20\t\r\n\f]*\/?>(?:<\/\1>|)$/i );
 
+function isObviousHtml( input ) {
+	return input[ 0 ] === "<" &&
+		input[ input.length - 1 ] === ">" &&
+		input.length >= 3;
+}
+
 // Implement the identical functionality for filter and not
 function winnow( elements, qualifier, not ) {
 	if ( typeof qualifier === "function" ) {
@@ -2429,20 +2435,41 @@ var rootjQuery,
 		// so migrate can support jQuery.sub (gh-2101)
 		root = root || rootjQuery;
 
-		// Handle HTML strings
-		if ( typeof selector === "string" ) {
-			if ( selector[ 0 ] === "<" &&
-				selector[ selector.length - 1 ] === ">" &&
-				selector.length >= 3 ) {
+		// HANDLE: $(DOMElement)
+		if ( selector.nodeType ) {
+			this[ 0 ] = selector;
+			this.length = 1;
+			return this;
 
-				// Assume that strings that start and end with <> are HTML and skip the regex check
+		// HANDLE: $(function)
+		// Shortcut for document ready
+		} else if ( typeof selector === "function" ) {
+			return root.ready !== undefined ?
+				root.ready( selector ) :
+
+				// Execute immediately if ready is not present
+				selector( jQuery );
+
+		} else {
+
+			// Handle obvious HTML strings
+			match = selector + "";
+			if ( isObviousHtml( match ) ) {
+
+				// Assume that strings that start and end with <> are HTML and skip
+				// the regex check. This also handles browser-supported HTML wrappers
+				// like TrustedHTML.
 				match = [ null, selector, null ];
 
-			} else {
+			// Handle HTML strings or selectors
+			} else if ( typeof selector === "string" ) {
 				match = rquickExpr.exec( selector );
+			} else {
+				return jQuery.makeArray( selector, this );
 			}
 
 			// Match html or make sure no context is specified for #id
+			// Note: match[1] may be a string or a TrustedHTML wrapper
 			if ( match && ( match[ 1 ] || !context ) ) {
 
 				// HANDLE: $(html) -> $(array)
@@ -2487,7 +2514,7 @@ var rootjQuery,
 					return this;
 				}
 
-			// HANDLE: $(expr, $(...))
+			// HANDLE: $(expr) & $(expr, $(...))
 			} else if ( !context || context.jquery ) {
 				return ( context || root ).find( selector );
 
@@ -2496,24 +2523,8 @@ var rootjQuery,
 			} else {
 				return this.constructor( context ).find( selector );
 			}
-
-		// HANDLE: $(DOMElement)
-		} else if ( selector.nodeType ) {
-			this[ 0 ] = selector;
-			this.length = 1;
-			return this;
-
-		// HANDLE: $(function)
-		// Shortcut for document ready
-		} else if ( typeof selector === "function" ) {
-			return root.ready !== undefined ?
-				root.ready( selector ) :
-
-				// Execute immediately if ready is not present
-				selector( jQuery );
 		}
 
-		return jQuery.makeArray( selector, this );
 	};
 
 // Give the init function the jQuery prototype for later instantiation
@@ -4493,7 +4504,7 @@ function buildFragment( elems, context, scripts, selection, ignored ) {
 		if ( elem || elem === 0 ) {
 
 			// Add nodes directly
-			if ( toType( elem ) === "object" ) {
+			if ( toType( elem ) === "object" && ( elem.nodeType || isArrayLike( elem ) ) ) {
 				jQuery.merge( nodes, elem.nodeType ? [ elem ] : elem );
 
 			// Convert non-html into a text node
@@ -5683,12 +5694,12 @@ jQuery.parseXML = function( data ) {
 	return xml;
 };
 
-// Argument "data" should be string of html
+// Argument "data" should be string of html or a TrustedHTML wrapper of obvious HTML
 // context (optional): If specified, the fragment will be created in this context,
 // defaults to document
 // keepScripts (optional): If true, will include scripts passed in the html string
 jQuery.parseHTML = function( data, context, keepScripts ) {
-	if ( typeof data !== "string" ) {
+	if ( typeof data !== "string" && !isObviousHtml( data + "" ) ) {
 		return [];
 	}
 	if ( typeof context === "boolean" ) {
