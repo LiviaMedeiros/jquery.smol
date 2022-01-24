@@ -582,6 +582,8 @@ jQuery.escapeSelector = function( sel ) {
 
 var sort = arr.sort;
 
+var splice = arr.splice;
+
 var hasDuplicate;
 
 // Document order sorting
@@ -660,7 +662,7 @@ jQuery.uniqueSort = function( results ) {
 			}
 		}
 		while ( j-- ) {
-			results.splice( duplicates[ j ], 1 );
+			splice.call( results, duplicates[ j ], 1 );
 		}
 	}
 
