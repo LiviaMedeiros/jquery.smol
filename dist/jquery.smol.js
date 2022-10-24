@@ -521,20 +521,61 @@ var whitespace = "[\\x20\\t\\r\\n\\f]";
 
 var isIE = document.documentMode;
 
-var rbuggyQSA = isIE && new RegExp(
+try {
+	/* eslint-disable no-undef */
 
-	// Support: IE 9 - 11+
-	// IE's :disabled selector does not pick up the children of disabled fieldsets
-	":enabled|:disabled|" +
+	// Support: Chrome 105+, Firefox 104+, Safari 15.4+
+	// Make sure forgiving mode is not used in `CSS.supports( "selector(...)" )`.
+	//
+	// `:is()` uses a forgiving selector list as an argument and is widely
+	// implemented, so it's a good one to test against.
+	support.cssSupportsSelector = CSS.supports( "selector(*)" ) &&
 
-	// Support: IE 11+
-	// IE 11 doesn't find elements on a `[name='']` query in some cases.
-	// Adding a temporary attribute to the document before the selection works
-	// around the issue.
-	"\\[" + whitespace + "*name" + whitespace + "*=" +
-		whitespace + "*(?:''|\"\")"
+		// `*` is needed as Safari & newer Chrome implemented something in between
+		// for `:has()` - it throws in `qSA` if it only contains an unsupported
+		// argument but multiple ones, one of which is supported, are fine.
+		// We want to play safe in case `:is()` gets the same treatment.
+		!CSS.supports( "selector(:is(*,:jqfake))" );
 
-);
+	/* eslint-enable */
+} catch ( e ) {
+	support.cssSupportsSelector = false;
+}
+
+var rbuggyQSA = [];
+
+if ( isIE ) {
+	rbuggyQSA.push(
+
+		// Support: IE 9 - 11+
+		// IE's :disabled selector does not pick up the children of disabled fieldsets
+		":enabled",
+		":disabled",
+
+		// Support: IE 11+
+		// IE 11 doesn't find elements on a `[name='']` query in some cases.
+		// Adding a temporary attribute to the document before the selection works
+		// around the issue.
+		"\\[" + whitespace + "*name" + whitespace + "*=" +
+			whitespace + "*(?:''|\"\")"
+	);
+}
+
+if ( !support.cssSupportsSelector ) {
+
+	// Support: Chrome 105+, Safari 15.4+
+	// `:has()` uses a forgiving selector list as an argument so our regular
+	// `try-catch` mechanism fails to catch `:has()` with arguments not supported
+	// natively like `:has(:contains("Foo"))`. Where supported & spec-compliant,
+	// we now use `CSS.supports("selector(SELECTOR_TO_BE_TESTED)")` but outside
+	// that, let's mark `:has` as buggy to always use jQuery traversal for
+	// `:has()`.
+	rbuggyQSA.push( ":has" );
+}
+
+rbuggyQSA = rbuggyQSA.length && new RegExp( rbuggyQSA.join( "|" ) );
+
+var rbuggyQSA$1 = rbuggyQSA;
 
 var rtrim = new RegExp(
 	"^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$",
@@ -864,7 +905,7 @@ function find( selector, context, results, seed ) {
 
 			// Take advantage of querySelectorAll
 			if ( !nonnativeSelectorCache[ selector + " " ] &&
-				( !rbuggyQSA || !rbuggyQSA.test( selector ) ) ) {
+				( !rbuggyQSA$1 || !rbuggyQSA$1.test( selector ) ) ) {
 
 				newSelector = selector;
 				newContext = context;
@@ -906,6 +947,27 @@ function find( selector, context, results, seed ) {
 				}
 
 				try {
+
+					// `qSA` may not throw for unrecognized parts using forgiving parsing:
+					// https://drafts.csswg.org/selectors/#forgiving-selector
+					// like the `:has()` pseudo-class:
+					// https://drafts.csswg.org/selectors/#relational
+					// `CSS.supports` is still expected to return `false` then:
+					// https://drafts.csswg.org/css-conditional-4/#typedef-supports-selector-fn
+					// https://drafts.csswg.org/css-conditional-4/#dfn-support-selector
+					if ( support.cssSupportsSelector &&
+
+						// eslint-disable-next-line no-undef
+						!CSS.supports( "selector(" + newSelector + ")" ) ) {
+
+						// Support: IE 11+
+						// Throw to get to the same code path as an error directly in qSA.
+						// Note: once we only support browser supporting
+						// `CSS.supports('selector(...)')`, we can most likely drop
+						// the `try-catch`. IE doesn't implement the API.
+						throw new Error();
+					}
+
 					push.apply( results,
 						newContext.querySelectorAll( newSelector )
 					);
@@ -1107,7 +1169,7 @@ find.matchesSelector = function( elem, expr ) {
 
 	if ( documentIsHTML &&
 		!nonnativeSelectorCache[ expr + " " ] &&
-		( !rbuggyQSA || !rbuggyQSA.test( expr ) ) ) {
+		( !rbuggyQSA$1 || !rbuggyQSA$1.test( expr ) ) ) {
 
 		try {
 			return matches.call( elem, expr );
@@ -1436,33 +1498,14 @@ Expr = jQuery.expr = {
 			// https://www.w3.org/TR/selectors/#pseudo-classes
 			// Prioritize by case sensitivity in case custom pseudos are added with uppercase letters
 			// Remember that setFilters inherits from pseudos
-			var args,
-				fn = Expr.pseudos[ pseudo ] || Expr.setFilters[ pseudo.toLowerCase() ] ||
-					selectorError( "unsupported pseudo: " + pseudo );
+			var fn = Expr.pseudos[ pseudo ] || Expr.setFilters[ pseudo.toLowerCase() ] ||
+				selectorError( "unsupported pseudo: " + pseudo );
 
 			// The user may use createPseudo to indicate that
 			// arguments are needed to create the filter function
 			// just as jQuery does
 			if ( fn[ expando ] ) {
 				return fn( argument );
-			}
-
-			// But maintain support for old signatures
-			if ( fn.length > 1 ) {
-				args = [ pseudo, pseudo, "", argument ];
-				return Expr.setFilters.hasOwnProperty( pseudo.toLowerCase() ) ?
-					markFunction( function( seed, matches ) {
-						var idx,
-							matched = fn( seed, argument ),
-							i = matched.length;
-						while ( i-- ) {
-							idx = indexOf.call( seed, matched[ i ] );
-							seed[ idx ] = !( matches[ idx ] = matched[ i ] );
-						}
-					} ) :
-					function( elem ) {
-						return fn( elem, 0, args );
-					};
 			}
 
 			return fn;
@@ -4439,8 +4482,6 @@ var isAttached$1 = isAttached;
 // https://html.spec.whatwg.org/multipage/syntax.html#tag-name-state
 var rtagName = ( /<([a-z][^\/\0>\x20\t\r\n\f]*)/i );
 
-var rscriptType = ( /^$|^module$|\/(?:java|ecma)script/i );
-
 var wrapMap = {
 
 	// Table parts need to be wrapped with `<table>` or they're
@@ -4479,6 +4520,8 @@ function getAll( context, tag ) {
 
 	return ret;
 }
+
+var rscriptType = ( /^$|^module$|\/(?:java|ecma)script/i );
 
 // Mark scripts as having already been evaluated
 function setGlobalEval( elems, refElements ) {
@@ -4581,23 +4624,6 @@ function buildFragment( elems, context, scripts, selection, ignored ) {
 	return fragment;
 }
 
-var
-
-	// Support: IE <=10 - 11+
-	// In IE using regex groups here causes severe slowdowns.
-	rnoInnerhtml = /<script|<style|<link/i;
-
-// Prefer a tbody over its parent table for containing new rows
-function manipulationTarget( elem, content ) {
-	if ( nodeName( elem, "table" ) &&
-		nodeName( content.nodeType !== 11 ? content : content.firstChild, "tr" ) ) {
-
-		return jQuery( elem ).children( "tbody" )[ 0 ] || elem;
-	}
-
-	return elem;
-}
-
 // Replace/restore the type attribute of script elements for safe DOM manipulation
 function disableScript( elem ) {
 	elem.type = ( elem.getAttribute( "type" ) !== null ) + "/" + elem.type;
@@ -4611,38 +4637,6 @@ function restoreScript( elem ) {
 	}
 
 	return elem;
-}
-
-function cloneCopyEvent( src, dest ) {
-	var i, l, type, pdataOld, udataOld, udataCur, events;
-
-	if ( dest.nodeType !== 1 ) {
-		return;
-	}
-
-	// 1. Copy private data: events, handlers, etc.
-	if ( dataPriv.hasData( src ) ) {
-		pdataOld = dataPriv.get( src );
-		events = pdataOld.events;
-
-		if ( events ) {
-			dataPriv.remove( dest, "handle events" );
-
-			for ( type in events ) {
-				for ( i = 0, l = events[ type ].length; i < l; i++ ) {
-					jQuery.event.add( dest, type, events[ type ][ i ] );
-				}
-			}
-		}
-	}
-
-	// 2. Copy user data
-	if ( dataUser.hasData( src ) ) {
-		udataOld = dataUser.access( src );
-		udataCur = jQuery.extend( {}, udataOld );
-
-		dataUser.set( dest, udataCur );
-	}
 }
 
 function domManip( collection, args, callback, ignored ) {
@@ -4728,6 +4722,55 @@ function domManip( collection, args, callback, ignored ) {
 	}
 
 	return collection;
+}
+
+var
+
+	// Support: IE <=10 - 11+
+	// In IE using regex groups here causes severe slowdowns.
+	rnoInnerhtml = /<script|<style|<link/i;
+
+// Prefer a tbody over its parent table for containing new rows
+function manipulationTarget( elem, content ) {
+	if ( nodeName( elem, "table" ) &&
+		nodeName( content.nodeType !== 11 ? content : content.firstChild, "tr" ) ) {
+
+		return jQuery( elem ).children( "tbody" )[ 0 ] || elem;
+	}
+
+	return elem;
+}
+
+function cloneCopyEvent( src, dest ) {
+	var i, l, type, pdataOld, udataOld, udataCur, events;
+
+	if ( dest.nodeType !== 1 ) {
+		return;
+	}
+
+	// 1. Copy private data: events, handlers, etc.
+	if ( dataPriv.hasData( src ) ) {
+		pdataOld = dataPriv.get( src );
+		events = pdataOld.events;
+
+		if ( events ) {
+			dataPriv.remove( dest, "handle events" );
+
+			for ( type in events ) {
+				for ( i = 0, l = events[ type ].length; i < l; i++ ) {
+					jQuery.event.add( dest, type, events[ type ][ i ] );
+				}
+			}
+		}
+	}
+
+	// 2. Copy user data
+	if ( dataUser.hasData( src ) ) {
+		udataOld = dataUser.access( src );
+		udataCur = jQuery.extend( {}, udataOld );
+
+		dataUser.set( dest, udataCur );
+	}
 }
 
 function remove( elem, selector, keepData ) {
@@ -5104,17 +5147,37 @@ function curCSS( elem, name, computed ) {
 
 	// getPropertyValue is needed for `.css('--customProperty')` (gh-3144)
 	if ( computed ) {
+
+		// Support: IE <=9 - 11+
+		// IE only supports `"float"` in `getPropertyValue`; in computed styles
+		// it's only available as `"cssFloat"`. We no longer modify properties
+		// sent to `.css()` apart from camelCasing, so we need to check both.
+		// Normally, this would create difference in behavior: if
+		// `getPropertyValue` returns an empty string, the value returned
+		// by `.css()` would be `undefined`. This is usually the case for
+		// disconnected elements. However, in IE even disconnected elements
+		// with no styles return `"none"` for `getPropertyValue( "float" )`
 		ret = computed.getPropertyValue( name ) || computed[ name ];
 
-		// trim whitespace for custom property (issue gh-4926)
-		if ( isCustomProp ) {
+		if ( isCustomProp && ret ) {
 
+			// Support: Firefox 105+, Chrome <=105+
+			// Spec requires trimming whitespace for custom properties (gh-4926).
+			// Firefox only trims leading whitespace. Chrome just collapses
+			// both leading & trailing whitespace to a single space.
+			//
+			// Fall back to `undefined` if empty string returned.
+			// This collapses a missing definition with property defined
+			// and set to an empty string but there's no standard API
+			// allowing us to differentiate them without a performance penalty
+			// and returning `undefined` aligns with older jQuery.
+			//
 			// rtrim treats U+000D CARRIAGE RETURN and U+000C FORM FEED
 			// as whitespace while CSS does not, but this is not a problem
 			// because CSS preprocessing replaces them with U+000A LINE FEED
 			// (which *is* CSS whitespace)
 			// https://www.w3.org/TR/css-syntax-3/#input-preprocessing
-			ret = ret.replace( rtrim, "$1" );
+			ret = ret.replace( rtrim, "$1" ) || undefined;
 		}
 
 		if ( ret === "" && !isAttached$1( elem ) ) {
