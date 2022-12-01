@@ -524,7 +524,7 @@ var isIE = document.documentMode;
 try {
 	/* eslint-disable no-undef */
 
-	// Support: Chrome 105+, Firefox 104+, Safari 15.4+
+	// Support: Chrome 105+, Firefox <106, Safari 15.4+
 	// Make sure forgiving mode is not used in `CSS.supports( "selector(...)" )`.
 	//
 	// `:is()` uses a forgiving selector list as an argument and is widely
@@ -584,15 +584,14 @@ var rtrim = new RegExp(
 
 // Note: an element does not contain itself
 jQuery.contains = function( a, b ) {
-	var adown = a.nodeType === 9 ? a.documentElement : a,
-		bup = b && b.parentNode;
+	var bup = b && b.parentNode;
 
 	return a === bup || !!( bup && bup.nodeType === 1 && (
 
 		// Support: IE 9 - 11+
 		// IE doesn't have `contains` on SVG.
-		adown.contains ?
-			adown.contains( bup ) :
+		a.contains ?
+			a.contains( bup ) :
 			a.compareDocumentPosition && a.compareDocumentPosition( bup ) & 16
 	) );
 };
@@ -708,6 +707,10 @@ jQuery.uniqueSort = function( results ) {
 	}
 
 	return results;
+};
+
+jQuery.fn.uniqueSort = function() {
+	return this.pushStack( jQuery.uniqueSort( slice.apply( this ) ) );
 };
 
 var preferredDoc = document,
