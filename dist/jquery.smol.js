@@ -423,6 +423,20 @@ jQuery.extend( {
 		return !rhtmlSuffix.test( namespace || docElem && docElem.nodeName || "HTML" );
 	},
 
+	// Note: an element does not contain itself
+	contains: function( a, b ) {
+		var bup = b && b.parentNode;
+
+		return a === bup || !!( bup && bup.nodeType === 1 && (
+
+			// Support: IE 9 - 11+
+			// IE doesn't have `contains` on SVG.
+			a.contains ?
+				a.contains( bup ) :
+				a.compareDocumentPosition && a.compareDocumentPosition( bup ) & 16
+		) );
+	},
+
 	merge: function( first, second ) {
 		var len = +second.length,
 			j = 0,
@@ -581,20 +595,6 @@ var rtrim = new RegExp(
 	"^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$",
 	"g"
 );
-
-// Note: an element does not contain itself
-jQuery.contains = function( a, b ) {
-	var bup = b && b.parentNode;
-
-	return a === bup || !!( bup && bup.nodeType === 1 && (
-
-		// Support: IE 9 - 11+
-		// IE doesn't have `contains` on SVG.
-		a.contains ?
-			a.contains( bup ) :
-			a.compareDocumentPosition && a.compareDocumentPosition( bup ) & 16
-	) );
-};
 
 // CSS string/identifier serialization
 // https://drafts.csswg.org/cssom/#common-serializing-idioms
