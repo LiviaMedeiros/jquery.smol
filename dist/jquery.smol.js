@@ -380,9 +380,14 @@ jQuery.extend( {
 				// Do not traverse comment nodes
 				ret += jQuery.text( node );
 			}
-		} else if ( nodeType === 1 || nodeType === 9 || nodeType === 11 ) {
+		}
+		if ( nodeType === 1 || nodeType === 11 ) {
 			return elem.textContent;
-		} else if ( nodeType === 3 || nodeType === 4 ) {
+		}
+		if ( nodeType === 9 ) {
+			return elem.documentElement.textContent;
+		}
+		if ( nodeType === 3 || nodeType === 4 ) {
 			return elem.nodeValue;
 		}
 
@@ -2327,6 +2332,13 @@ function select( selector, context, results, seed ) {
 setDocument();
 
 jQuery.find = find;
+
+// These have always been private, but they used to be documented as part of
+// Sizzle so let's maintain them for now for backwards compatibility purposes.
+find.compile = compile;
+find.select = select;
+find.setDocument = setDocument;
+find.tokenize = tokenize;
 
 } )();
 
@@ -4706,7 +4718,7 @@ function domManip( collection, args, callback, ignored ) {
 			if ( hasScripts ) {
 				doc = scripts[ scripts.length - 1 ].ownerDocument;
 
-				// Reenable scripts
+				// Re-enable scripts
 				jQuery.map( scripts, restoreScript );
 
 				// Evaluate executable scripts on first document insertion
@@ -5326,7 +5338,7 @@ support.reliableTrDimensions = function() {
 		tr = document.createElement( "tr" );
 
 		table.style.cssText = "position:absolute;left:-11111px;border-collapse:separate";
-		tr.style.cssText = "border:1px solid";
+		tr.style.cssText = "box-sizing:content-box;border:1px solid";
 
 		// Support: Chrome 86+
 		// Height set through cssText does not get applied.
@@ -5339,7 +5351,7 @@ support.reliableTrDimensions = function() {
 		// display for all div elements is set to "inline",
 		// which causes a problem only in Android Chrome, but
 		// not consistently across all devices.
-		// Ensuring the div is display: block
+		// Ensuring the div is `display: block`
 		// gets around this issue.
 		div.style.display = "block";
 
@@ -5943,4 +5955,5 @@ if ( document.readyState !== "loading" ) {
 }
 
 return jQuery;
+
 } );
