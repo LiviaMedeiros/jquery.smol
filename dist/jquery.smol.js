@@ -526,9 +526,7 @@ jQuery.each( "Boolean Number String Function Array Date RegExp Object Error Symb
 	} );
 
 function nodeName( elem, name ) {
-
 	return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
-
 }
 
 var pop = arr.pop;
@@ -586,8 +584,6 @@ if ( !support.cssHas ) {
 
 rbuggyQSA = rbuggyQSA.length && new RegExp( rbuggyQSA.join( "|" ) );
 
-var rbuggyQSA$1 = rbuggyQSA;
-
 var rtrim = new RegExp(
 	"^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$",
 	"g"
@@ -597,11 +593,11 @@ var rtrim = new RegExp(
 var identifier = "(?:\\\\[\\da-fA-F]{1,6}" + whitespace +
 	"?|\\\\[^\\r\\n\\f]|[\\w-]|[^\0-\\x7f])+";
 
-var booleans = "checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|" +
-	"loop|multiple|open|readonly|required|scoped";
+var booleans = "checked|selected|async|autofocus|autoplay|controls|" +
+	"defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped";
 
-var rleadingCombinator = new RegExp( "^" + whitespace + "*([>+~]|" + whitespace + ")" +
-	whitespace + "*" );
+var rleadingCombinator = new RegExp( "^" + whitespace + "*([>+~]|" +
+	whitespace + ")" + whitespace + "*" );
 
 var rdescend = new RegExp( whitespace + "|>" );
 
@@ -1116,7 +1112,7 @@ function find( selector, context, results, seed ) {
 
 			// Take advantage of querySelectorAll
 			if ( !nonnativeSelectorCache[ selector + " " ] &&
-				( !rbuggyQSA$1 || !rbuggyQSA$1.test( selector ) ) ) {
+				( !rbuggyQSA || !rbuggyQSA.test( selector ) ) ) {
 
 				newSelector = selector;
 				newContext = context;
@@ -1328,7 +1324,7 @@ find.matchesSelector = function( elem, expr ) {
 
 	if ( documentIsHTML &&
 		!nonnativeSelectorCache[ expr + " " ] &&
-		( !rbuggyQSA$1 || !rbuggyQSA$1.test( expr ) ) ) {
+		( !rbuggyQSA || !rbuggyQSA.test( expr ) ) ) {
 
 		try {
 			return matches.call( elem, expr );
@@ -2373,7 +2369,7 @@ var rneedsContext = jQuery.expr.match.needsContext;
 
 // rsingleTag matches a string consisting of a single HTML element with no attributes
 // and captures the element's name
-var rsingleTag = ( /^<([a-z][^\/\0>:\x20\t\r\n\f]*)[\x20\t\r\n\f]*\/?>(?:<\/\1>|)$/i );
+var rsingleTag = /^<([a-z][^\/\0>:\x20\t\r\n\f]*)[\x20\t\r\n\f]*\/?>(?:<\/\1>|)$/i;
 
 function isObviousHtml( input ) {
 	return input[ 0 ] === "<" &&
@@ -2766,7 +2762,7 @@ jQuery.each( {
 
 // Multifunctional method to get and set values of a collection
 // The value/s can optionally be executed if it's a function
-var access = function( elems, fn, key, value, chainable, emptyGet, raw ) {
+function access( elems, fn, key, value, chainable, emptyGet, raw ) {
 	var i = 0,
 		len = elems.length,
 		bulk = key == null;
@@ -2823,7 +2819,7 @@ var access = function( elems, fn, key, value, chainable, emptyGet, raw ) {
 	}
 
 	return len ? fn( elems[ 0 ], key ) : emptyGet;
-};
+}
 
 // Matches dashed string for camelizing
 var rdashAlpha = /-([a-z])/g;
@@ -2841,7 +2837,7 @@ function camelCase( string ) {
 // Only count HTML whitespace
 // Other whitespace should count in values
 // https://infra.spec.whatwg.org/#ascii-whitespace
-var rnothtmlwhite = ( /[^\x20\t\r\n\f]+/g );
+var rnothtmlwhite = /[^\x20\t\r\n\f]+/g;
 
 /**
  * Determines whether an object can have data
@@ -3459,7 +3455,7 @@ jQuery.fn.extend( {
 	}
 } );
 
-var rcheckableType = ( /^(?:checkbox|radio)$/i );
+var rcheckableType = /^(?:checkbox|radio)$/i;
 
 var rtypenamespace = /^([^.]*)(?:\.(.+)|)/;
 
@@ -4500,12 +4496,10 @@ if ( !documentElement.getRootNode ) {
 	};
 }
 
-var isAttached$1 = isAttached;
-
 // rtagName captures the name from the first start tag in a string of HTML
 // https://html.spec.whatwg.org/multipage/syntax.html#tag-open-state
 // https://html.spec.whatwg.org/multipage/syntax.html#tag-name-state
-var rtagName = ( /<([a-z][^\/\0>\x20\t\r\n\f]*)/i );
+var rtagName = /<([a-z][^\/\0>\x20\t\r\n\f]*)/i;
 
 var wrapMap = {
 
@@ -4546,7 +4540,7 @@ function getAll( context, tag ) {
 	return ret;
 }
 
-var rscriptType = ( /^$|^module$|\/(?:java|ecma)script/i );
+var rscriptType = /^$|^module$|\/(?:java|ecma)script/i;
 
 // Mark scripts as having already been evaluated
 function setGlobalEval( elems, refElements ) {
@@ -4625,7 +4619,7 @@ function buildFragment( elems, context, scripts, selection, ignored ) {
 			continue;
 		}
 
-		attached = isAttached$1( elem );
+		attached = isAttached( elem );
 
 		// Append to fragment
 		tmp = getAll( fragment.appendChild( elem ), "script" );
@@ -4809,7 +4803,7 @@ function remove( elem, selector, keepData ) {
 		}
 
 		if ( node.parentNode ) {
-			if ( keepData && isAttached$1( node ) ) {
+			if ( keepData && isAttached( node ) ) {
 				setGlobalEval( getAll( node, "script" ) );
 			}
 			node.parentNode.removeChild( node );
@@ -4827,7 +4821,7 @@ jQuery.extend( {
 	clone: function( elem, dataAndEvents, deepDataAndEvents ) {
 		var i, l, srcElements, destElements,
 			clone = elem.cloneNode( true ),
-			inPage = isAttached$1( elem );
+			inPage = isAttached( elem );
 
 		// Fix IE cloning issues
 		if ( isIE && ( elem.nodeType === 1 || elem.nodeType === 11 ) &&
@@ -5072,13 +5066,13 @@ jQuery.each( {
 	};
 } );
 
-var pnum = ( /[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/ ).source;
+var pnum = /[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/.source;
 
 var rcssNum = new RegExp( "^(?:([+-])=|)(" + pnum + ")([a-z%]*)$", "i" );
 
 var rnumnonpx = new RegExp( "^(" + pnum + ")(?!px)[a-z%]+$", "i" );
 
-var rcustomProp = ( /^--/ );
+var rcustomProp = /^--/;
 
 var cssExpand = [ "Top", "Right", "Bottom", "Left" ];
 
@@ -5205,7 +5199,7 @@ function curCSS( elem, name, computed ) {
 			ret = ret.replace( rtrim, "$1" ) || undefined;
 		}
 
-		if ( ret === "" && !isAttached$1( elem ) ) {
+		if ( ret === "" && !isAttached( elem ) ) {
 			ret = jQuery.style( elem, name );
 		}
 	}
